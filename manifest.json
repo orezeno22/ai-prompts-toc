@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AI Prompts ToC",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "This is a Chrome extension that indexes all your prompts in Grok window and provides a Table of Contents for quick navigation with auto-scroll.",
   "author": "orezeno22",
   "homepage_url": "https://github.com/orezeno22/ai-prompts-toc",
