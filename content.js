@@ -8,22 +8,29 @@
 
   // Function to index user requests
   function indexRequests() {
-    // Select user messages based on provided DOM structure
-    const userMessages = document.querySelectorAll('div.items-end div.message-bubble');
+    // Select user messages using items-end and message-bubble
+    const userMessages = document.querySelectorAll('div.items-end .message-bubble');
     const requests = [];
     
-    console.log('Found messages:', userMessages.length, userMessages);
+    // Log the raw NodeList for debugging
+    console.log('Found messages with selector div.items-end .message-bubble:', userMessages.length, userMessages);
+    
+    // Safeguard: Check if userMessages is valid
+    if (!userMessages || userMessages.length === 0) {
+      console.log('No valid user messages found with selector: div.items-end .message-bubble');
+      return [];
+    }
     
     userMessages.forEach((msg, index) => {
-      // Assign a custom ID to avoid conflicts
+      // Assign a custom ID to the message-bubble div for scrolling
       const customId = `ext-grok-request-${index}`;
       if (!msg.id) {
         msg.id = customId;
       }
-      // Try to get text from nested elements if textContent is empty
-      const textElement = msg.querySelector('p, span, div') || msg;
+      // Extract text from the nested p tag within response-content-markdown
+      const textElement = msg.querySelector('div.response-content-markdown p') || msg;
       const text = (textElement.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 100);
-      console.log(`Message ${index} (ID: ${msg.id}):`, text);
+      console.log(`Message ${index} (ID: ${msg.id}, Text Element:`, textElement, `Text:`, text);
       if (text) {
         requests.push({
           id: msg.id,
@@ -37,10 +44,11 @@
     return requests;
   }
 
-  // Initialize indexing with a delay to handle dynamic content
+  // Initialize indexing with a longer delay to handle dynamic content
   setTimeout(() => {
-    indexRequests();
-  }, 2000);
+    const requests = indexRequests();
+    console.log('Initial indexing result:', requests);
+  }, 10000); // Increased to 10 seconds
 
   // Listen for messages from background script
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -70,11 +78,13 @@
 
   // Observe DOM changes to handle dynamic content
   if (!window.grokObserver) {
+    const chatContainer = document.querySelector('.chat-container') || document.querySelector('div.relative') || document.body;
     window.grokObserver = new MutationObserver(() => {
-      indexRequests();
+      const requests = indexRequests();
+      console.log('MutationObserver triggered, indexed requests:', requests);
     });
-    window.grokObserver.observe(document.body, { childList: true, subtree: true });
-    console.log('MutationObserver initialized');
+    window.grokObserver.observe(chatContainer, { childList: true, subtree: true });
+    console.log('MutationObserver initialized on:', chatContainer);
   } else {
     console.log('MutationObserver already exists, reusing');
   }
